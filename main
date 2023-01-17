@@ -1,0 +1,744 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = ReplicatedStorage:WaitForChild("Remote")
+local NotifyLoad = Remotes:WaitForChild("NotifyLoad")
+local executed = false
+
+local currentdate = tonumber(os.date("%d")) --Finds which day of the month it currently is
+local currentweek = tonumber(os.date("%W")) -- Finds which week of the year it is
+local currentmonth = tonumber(os.date("%m"))
+local currentyear = tonumber(os.date("%Y"))
+local currentdayyear = tonumber(os.date("%j"))
+
+--below are the seven datapoints for the week display
+local firstday = {{}, {}, {}} -- today
+local secondday = {{}, {}, {}} -- yesterday
+local thirdday = {{}, {}, {}} -- you guessed it
+local fourthday = {{}, {}, {}}
+local fifthday = {{}, {}, {}}
+local sixthday = {{}, {}, {}}
+local seventhday = {{}, {}, {}}
+
+local firstweek = {{}, {}, {}} -- just getting tables ready to put into tables yes
+local secondweek = {{}, {}, {}}
+local thirdweek = {{}, {}, {}}
+local fourthweek = {{}, {}, {}}
+
+local firstmonth = {{}, {}, {}} -- most recent month
+local secondmonth = {{}, {}, {}}
+local thirdmonth = {{}, {}, {}}
+local fourthmonth = {{}, {}, {}}
+local fifthmonth = {{}, {}, {}}
+local sixthmonth = {{}, {}, {}}
+local seventhmonth = {{}, {}, {}}
+local eighthmonth = {{}, {}, {}}
+local ninthmonth = {{}, {}, {}}
+local tenthmonth = {{}, {}, {}}
+local eleventhmonth = {{}, {}, {}}
+local twelthmonth = {{}, {}, {}}
+
+_G.weektable = {{}, {}, {}} --Table containing seven days of the week
+_G.monthtable = {{}, {}, {}} -- Table containing the four previous weeks not necessarily associated with the current month(i.e. current week of the year, previous week of the year, etc.)
+_G.yeartable = {{}, {}, {}}
+-- this is also going to have to loop for all three tables, and get the data from the tables
+
+local function sortdadata(history_table)
+	--we'll need to feed the table and table value in there for real, just added a placeholder so... yeah
+	
+	for thebigone = 1, 3 do
+		local thetable = history_table[thebigone]
+		for daiterations = 1, #thetable do -- the intention is that for however many entries, we're gonna do this loop
+			local tabletime = thetable[daiterations][2] -- grabbing the os.time from the current entry of the table
+			local tabledate = tonumber(os.date("%d", tabletime)) -- second value needs to be os.time from the table
+			local tableweek = tonumber(os.date("%W", tabletime))
+			local tablemonth = tonumber(os.date("%m", tabletime))
+			local tableyear = tonumber(os.date("%Y", tabletime))
+			local tabledayyear = tonumber(os.date("%j", tabletime))
+
+			if currentdayyear >= 7 then -- For the sake of finding the most recent week, if it is later than january 7
+				if tabledayyear == currentdayyear then -- if it's from today
+					table.insert(firstday[thebigone], thetable[daiterations][1]) -- let's add it to the entries for today, yay
+
+				elseif tabledayyear == currentdayyear - 1 then -- if it's from yesterday
+					table.insert(secondday[thebigone], thetable[daiterations][1])
+
+				elseif tabledayyear == currentdayyear - 2 then
+					table.insert(thirdday[thebigone], thetable[daiterations][1])
+
+				elseif tabledayyear == currentdayyear - 3 then
+					table.insert(fourthday[thebigone], thetable[daiterations][1])
+
+				elseif tabledayyear == currentdayyear - 4 then
+					table.insert(fifthday[thebigone], thetable[daiterations][1])
+
+				elseif tabledayyear == currentdayyear - 5 then
+					table.insert(sixthday[thebigone], thetable[daiterations][1])
+
+				elseif tabledayyear == currentdayyear - 6 then
+					table.insert(seventhday[thebigone], thetable[daiterations][1])
+				end
+			end
+
+			if currentdayyear < 7 then -- For the sake of finding the most recent week, if it is january 6 or earlier
+				if tabledate == currentdate then
+					table.insert(firstday[thebigone], thetable[daiterations][1])
+				end
+
+				if tablemonth == 12 then
+					if math.abs((tabledate - 31)) + currentdate == 1 then -- basically I figured out a way to just
+						table.insert(secondday[thebigone], thetable[daiterations][1])
+
+					elseif math.abs((tabledate - 31)) + currentdate == 2 then -- math mistake, i need to find the absolute value of the date minus 31
+						table.insert(thirdday[thebigone], thetable[daiterations][1])
+
+					elseif math.abs((tabledate - 31)) + currentdate == 3 then
+						table.insert(fourthday[thebigone], thetable[daiterations][1])
+
+					elseif math.abs((tabledate - 31)) + currentdate == 4 then
+						table.insert(fifthday[thebigone], thetable[daiterations][1])
+
+					elseif math.abs((tabledate - 31)) + currentdate == 5 then
+						table.insert(sixthday[thebigone], thetable[daiterations][1])
+
+					elseif math.abs((tabledate - 31)) + currentdate == 6 then
+						table.insert(seventhday[thebigone], thetable[daiterations][1])
+					end
+				end
+			end
+
+			if currentmonth > 1 then -- finding the week yuh
+				if tableweek == currentweek then
+					table.insert(firstweek[thebigone], thetable[daiterations][1])
+
+				elseif tableweek == currentweek - 1 then
+					table.insert(secondweek[thebigone], thetable[daiterations][1])
+
+				elseif tableweek == currentweek - 2 then
+					table.insert(thirdweek[thebigone], thetable[daiterations][1])
+
+				elseif tableweek == currentweek - 3 then
+					table.insert(fourthweek[thebigone], thetable[daiterations][1])
+				end
+			end
+
+			if currentmonth == 1 then -- Finding the week
+				if tableweek == currentweek then -- to set up current month
+					table.insert(firstweek[thebigone], thetable[daiterations][1])
+				end
+				if currentweek == 4 then
+					if tableweek == currentweek - 1 then
+						table.insert(secondweek[thebigone], thetable[daiterations][1])
+
+					elseif tableweek == currentweek - 2 then
+						table.insert(thirdweek[thebigone], thetable[daiterations][1])
+
+					elseif tableweek == currentweek - 3 then
+						table.insert(fourthweek[thebigone], thetable[daiterations][1])
+					end
+				end
+				if currentweek < 4 then
+					if tablemonth == 12 then -- finding week & a month thing
+						if math.abs(tableweek - 4) + currentweek == 1 then --week
+							table.insert(secondweek[thebigone], thetable[daiterations][1])
+
+						elseif math.abs(tableweek - 4) + currentweek == 2 then -- week
+							table.insert(thirdweek[thebigone], thetable[daiterations][1])
+
+						elseif math.abe(tableweek - 4) + currentweek == 3 then -- week calculation
+							table.insert(fourthweek[thebigone], thetable[daiterations][1])
+						end
+					end
+				end
+			end
+
+			if currentmonth - tablemonth >= 0 then
+				if currentyear ~= tableyear then
+					if tablemonth - currentmonth == 0 then
+						table.insert(twelthmonth[thebigone], thetable[daiterations][1])
+					end
+				end
+
+				if currentyear == tableyear then
+					if tablemonth == currentmonth then
+						table.insert(firstmonth[thebigone], thetable[daiterations][1])
+					end
+				end
+
+				if tablemonth == currentmonth - 1 then
+					table.insert(secondmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 2 then
+					table.insert(thirdmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 3 then
+					table.insert(fourthmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 4 then
+					table.insert(fifthmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 5 then
+					table.insert(sixthmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 6 then
+					table.insert(seventhmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 7 then
+					table.insert(eighthmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 8 then
+					table.insert(ninthmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 9 then
+					table.insert(tenthmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 10 then
+					table.insert(eleventhmonth[thebigone], thetable[daiterations][1])
+
+				elseif tablemonth == currentmonth - 11 then
+					table.insert(twelthmonth[thebigone], thetable[daiterations][1])
+				end
+			end
+
+			if currentmonth - tablemonth < 0 then
+				if math.abs(tablemonth - 12) + currentmonth == 1 then
+					table.insert(secondmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 2 then
+					table.insert(thirdmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 3 then
+					table.insert(fourthmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 4 then
+					table.insert(fifthmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 5 then
+					table.insert(sixthmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 6 then
+					table.insert(seventhmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 7 then
+					table.insert(eighthmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 8 then
+					table.insert(ninthmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 9 then
+					table.insert(tenthmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 10 then
+					table.insert(eleventhmonth[thebigone], thetable[daiterations][1])
+
+				elseif math.abs(tablemonth - 12) + currentmonth == 11 then
+					table.insert(twelthmonth[thebigone], thetable[daiterations][1])
+				end
+			end
+		end
+	end	
+end
+
+
+local function daaverages()
+	
+	local numerator = 0 -- how many parts
+	local denominator = 0 -- what you're dividing by, austin
+	local defaults = {0,0,800}
+	
+	for loop = 1, 3 do --Twelth Month Calculation
+		for theentry = 1, #twelthmonth[loop] do
+			numerator = numerator + twelthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			
+			
+
+		_G.yeartable[loop]["TwelthMonth"] = defaults[loop] -- this might be the line that necessitates additional consideration. One idea is to add a table of local variables filled with the defaults. (E.g. 0 KDR, 0 WLR, 800 ELO)
+			
+		else
+		
+		_G.yeartable[loop]["TwelthMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+	end
+	
+	for loop = 1, 3 do -- Eleventh Month calculations
+		for theentry = 1, #eleventhmonth[loop] do
+			numerator = numerator + eleventhmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then
+			if loop == 3 then
+				_G.yeartable[loop]["EleventhMonth"] = _G.yeartable[loop]["TwelthMonth"]
+			else
+				_G.yeartable[loop]["EleventhMonth"] = 0
+			end
+			
+		else
+		
+		_G.yeartable[loop]["EleventhMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+			denominator = 0
+		
+	end
+	
+	for loop = 1, 3 do -- Tenth Month Calculation
+		for theentry = 1, #tenthmonth[loop] do
+			numerator = numerator + tenthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then
+			if loop == 3 then 
+			_G.yeartable[loop]["TenthMonth"] = _G.yeartable[loop]["EleventhMonth"]
+			else
+				_G.yeartable[loop]["TenthMonth"] = 0
+			end
+		else
+		
+		_G.yeartable[loop]["TenthMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+			denominator = 0
+	end
+	
+	for loop = 1, 3 do -- Ninth Month Calculation
+		for theentry = 1, #ninthmonth[loop] do
+			numerator = numerator + ninthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then
+				_G.yeartable[loop]["NinthMonth"] = _G.yeartable[loop]["TenthMonth"]
+			else
+				_G.yeartable[loop]["NinthMonth"] = 0
+			end
+		else
+		
+		_G.yeartable[loop]["NinthMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+			denominator = 0
+	end
+	
+	for loop = 1, 3 do -- Eighth Month Calculation
+		for theentry = 1, #eighthmonth[loop] do
+			numerator = numerator + eighthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then 
+				_G.yeartable[loop]["EighthMonth"] = _G.yeartable[loop]["NinthMonth"]
+			else
+				_G.yeartable[loop]["EighthMonth"] = 0
+			end
+
+			
+		else
+		
+		_G.yeartable[loop]["EighthMonth"] = (numerator / denominator)	
+			end
+			numerator = 0
+		denominator = 0
+	end
+	
+	for loop = 1, 3 do -- Seventh Month Calculation
+		for theentry = 1, #seventhmonth[loop] do
+			numerator = numerator + seventhmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then 
+				_G.yeartable[loop]["SeventhMonth"] = _G.yeartable[loop]["EighthMonth"]
+			else
+				_G.yeartable[loop]["SeventhMonth"] = 0
+			end
+			
+		else
+		
+		_G.yeartable[loop]["SeventhMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+	end
+	
+	for loop = 1, 3 do -- Sixth Month Calculation
+		for theentry = 1, #sixthmonth[loop] do
+			numerator = numerator + sixthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then
+				_G.yeartable[loop]["SixthMonth"] = _G.yeartable[loop]["SeventhMonth"]
+			else
+				_G.yeartable[loop]["SixthMonth"] = 0
+			end
+			
+			
+		else
+		
+		_G.yeartable[loop]["SixthMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+end
+	
+	for loop = 1, 3 do -- Fifth Month Calculation
+		for theentry = 1, #fifthmonth[loop] do
+			numerator = numerator + fifthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then 
+				_G.yeartable[loop]["FifthMonth"] = _G.yeartable[loop]["SixthMonth"]
+			else
+				_G.yeartable[loop]["FifthMonth"] = 0
+			end
+
+			
+		else
+		
+		_G.yeartable[loop]["FifthMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+end
+
+	for loop = 1, 3 do -- Fourth Month Calculations
+		for theentry = 1, #fourthmonth[loop] do
+			numerator = numerator + fourthmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.yeartable[loop]["FourthMonth"] = _G.yeartable[loop]["FifthMonth"]
+			else
+				_G.yeartable[loop]["FourthMonth"] = 0
+			end
+
+			
+		else
+		_G.yeartable[loop]["FourthMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+	end	
+	
+	for loop = 1, 3 do -- Third Month Calculation
+		for theentry = 1, #thirdmonth[loop] do
+			numerator = numerator + thirdmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then
+			if loop == 3 then
+				_G.yeartable[loop]["ThirdMonth"] = _G.yeartable[loop]["FourthMonth"]
+			else
+				_G.yeartable[loop]["ThirdMonth"] = 0
+			end			
+		else
+		_G.yeartable[loop]["ThirdMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+	end 
+	
+	for loop = 1, 3 do -- Second Month Calculation
+		for theentry = 1, #secondmonth[loop] do
+			numerator = numerator + secondmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then
+			if loop == 3 then
+				_G.yeartable[loop]["SecondMonth"] = _G.yeartable[loop]["ThirdMonth"]
+			else
+				_G.yeartable[loop]["SecondMonth"] = 0
+			end
+
+			
+		else
+		
+		_G.yeartable[loop]["SecondMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+
+		end 
+	for loop = 1, 3 do -- First Month Calculation
+		for theentry = 1, #firstmonth[loop] do
+			numerator = numerator + firstmonth[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then
+			if loop == 3 then
+				_G.yeartable[loop]["FirstMonth"] = _G.yeartable[loop]["SecondMonth"]
+			else
+				_G.yeartable[loop]["FirstMonth"] = 0
+			end
+
+			
+		else
+		
+		_G.yeartable[loop]["FirstMonth"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+end	
+	
+	for loop = 1, 3 do -- Fourth Week Calculation
+		for theentry = 1, #fourthweek[loop] do
+			numerator = numerator + fourthweek[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then
+				_G.monthtable[loop]["FourthWeek"] = _G.yeartable[loop]["SecondMonth"]
+			else
+				_G.monthtable[loop]["FourthWeek"] = 0
+			end
+
+			
+		else
+		
+		_G.monthtable[loop]["FourthWeek"] = (numerator / denominator)
+			end
+			numerator = 0
+		denominator = 0
+end	
+	for loop = 1, 3 do -- Third Week Calculation
+		for theentry = 1, #thirdweek[loop] do
+			numerator = numerator + thirdweek[loop][theentry]
+			denominator = denominator + 1
+		end
+		
+		if denominator == 0 then 
+			if loop == 3 then
+				_G.monthtable[loop]["ThirdWeek"] = _G.monthtable[loop]["FourthWeek"]
+			else
+				_G.monthtable[loop]["ThirdWeek"] = 0
+			end
+
+			
+		else
+		
+			_G.monthtable[loop]["ThirdWeek"] = (numerator / denominator)
+			end
+		numerator = 0
+		denominator = 0
+end	
+	for loop = 1, 3 do -- Second Week Calculation
+		for theentry = 1, #secondweek[loop] do
+			numerator = numerator + secondweek[loop][theentry]
+			denominator = denominator + 1
+		end
+
+		if denominator == 0 then 
+			if loop == 3 then
+				_G.monthtable[loop]["SecondWeek"] = _G.monthtable[loop]["ThirdWeek"]
+			else
+				_G.monthtable[loop]["SecondWeek"] = 0
+			end
+
+
+		else
+
+			_G.monthtable[loop]["SecondWeek"] = (numerator / denominator)
+			end
+			numerator = 0
+			denominator = 0
+
+	end	
+	for loop = 1, 3 do -- First Week Calculation
+		for theentry = 1, #firstweek[loop] do
+			numerator = numerator + firstweek[loop][theentry]
+			denominator = denominator + 1
+		end
+
+		if denominator == 0 then 
+			if loop == 3 then
+				_G.monthtable[loop]["FirstWeek"] = _G.monthtable[loop]["SecondWeek"]
+			else
+				_G.monthtable[loop]["FirstWeek"] = 0
+			end
+
+
+		else
+
+			_G.monthtable[loop]["FirstWeek"] = (numerator / denominator)
+			end
+			numerator = 0
+			denominator = 0
+	end	
+	
+	for loop = 1, 3 do -- Seventh Day Calculation
+		for theentry = 1, #seventhday[loop] do
+			numerator = numerator + seventhday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["SeventhDay"] = _G.monthtable[loop]["SecondWeek"]
+			else
+				_G.weektable[loop]["SeventhDay"] = 0
+			end
+			-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["SeventhDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end
+	for loop = 1, 3 do -- Sixth Day Calculation
+		for theentry = 1, #sixthday[loop] do
+			numerator = numerator + sixthday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["SixthDay"] = _G.weektable[loop]["SeventhDay"]
+			else
+				_G.weektable[loop]["SixthDay"] = 0
+			end
+			-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["SixthDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end
+	for loop = 1, 3 do -- Fifth Day Calculation
+		for theentry = 1, #fifthday[loop] do
+			numerator = numerator + fifthday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["FifthDay"] = _G.weektable[loop]["SixthDay"]
+			else
+				_G.weektable[loop]["FifthDay"] = 0
+			end
+			-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["FifthDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end
+	for loop = 1, 3 do -- Fourth Day Calculation
+		for theentry = 1, #fourthday[loop] do
+			numerator = numerator + fourthday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["FourthDay"] = _G.weektable[loop]["FifthDay"]
+			else
+				_G.weektable[loop]["FourthDay"] = 0
+			end
+			-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["FourthDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end
+	for loop = 1, 3 do -- Third Day Calculation
+		for theentry = 1, #thirdday[loop] do
+			numerator = numerator + thirdday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["ThirdDay"] = _G.weektable[loop]["FourthDay"]
+			else
+				_G.weektable[loop]["ThirdDay"] = 0
+			end
+	-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["ThirdDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end
+	for loop = 1, 3 do -- Second Day Calculation
+		for theentry = 1, #secondday[loop] do
+			numerator = numerator + secondday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["SecondDay"] = _G.weektable[loop]["ThirdDay"]
+			else
+				_G.weektable[loop]["SecondDay"] = 0
+			end
+-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["SecondDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end
+	for loop = 1, 3 do -- First Day Calculation
+		for theentry = 1, #firstday[loop] do
+			numerator = numerator + firstday[loop][theentry]
+			denominator = denominator + 1
+		end
+		if denominator == 0 then
+			if loop == 3 then
+				_G.weektable[loop]["FirstDay"] = _G.weektable[loop]["SecondDay"]
+			else
+				_G.weektable[loop]["FirstDay"] = 0
+			end
+
+
+-- This is where I wrote the comment that I was gonna stop for the night, but... nah no way, not gonna be denied this close. No way.
+		else
+			_G.weektable[loop]["FirstDay"] = (numerator / denominator)
+		end
+		numerator = 0
+		denominator = 0
+	end	
+end
+
+---- For each category.
+--local history = {{},{},{}}
+--for category = 1, 3 do	
+--	-- Generate 2000 entries.	
+--	for count = 1, 2000 do
+--		if (category == 1) then
+--			-- Kills Nodes
+--			local kd = math.random(1, 5)
+--			local timestamp = math.random(1631145600, 1662698527)
+--			table.insert(history[category], {kd, timestamp})			
+--		elseif (category == 2) then
+--			-- Wins Nodes
+--			local wl = math.random(1, 5)
+--			local timestamp = math.random(1631145600, 1662698527)
+--			table.insert(history[category], {wl, timestamp})			
+--		else
+--			-- ELO Nodes
+--			local elo = math.random(800, 2000)
+--			local timestamp = math.random(1631145600, 1662698527)
+--			table.insert(history[category], {elo, timestamp})
+--		end
+--	end	
+--end
+
+NotifyLoad.OnClientEvent:Connect(function(data)
+	if (not executed) then
+		sortdadata(data["History"])
+		daaverages()
+		executed = true
+	end
+end)
